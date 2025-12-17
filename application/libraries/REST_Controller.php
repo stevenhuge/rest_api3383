@@ -969,30 +969,36 @@ abstract class REST_Controller extends \CI_Controller {
      * @return string|NULL Supported request method as a lowercase string; otherwise, NULL if not supported
      */
     protected function _detect_method()
+{
+    // Declare a variable to store the method
+    $method = NULL;
+
+    // Determine whether the 'enable_emulate_request' setting is enabled
+    if ($this->config->item('enable_emulate_request') === TRUE)
     {
-        // Declare a variable to store the method
-        $method = NULL;
-
-        // Determine whether the 'enable_emulate_request' setting is enabled
-        if ($this->config->item('enable_emulate_request') === TRUE)
+        $method = $this->input->post('_method');
+        if ($method === NULL)
         {
-            $method = $this->input->post('_method');
-            if ($method === NULL)
-            {
-                $method = $this->input->server('HTTP_X_HTTP_METHOD_OVERRIDE');
-            }
+            $method = $this->input->server('HTTP_X_HTTP_METHOD_OVERRIDE');
+        }
 
+        // PERBAIKAN: Tambahkan pengecekan null sebelum strtolower
+        if ($method !== NULL) {
             $method = strtolower($method);
         }
-
-        if (empty($method))
-        {
-            // Get the request method as a lowercase string
-            $method = $this->input->method();
-        }
-
-        return in_array($method, $this->allowed_http_methods) && method_exists($this, '_parse_' . $method) ? $method : 'get';
     }
+
+    if (empty($method))
+    {
+        // Get the request method as a lowercase string
+        $method = $this->input->method();
+    }
+
+    // PERBAIKAN: Pastikan $method bukan null sebelum in_array (untuk keamanan PHP 8)
+    $method = ($method !== NULL) ? strtolower($method) : 'get';
+
+    return in_array($method, $this->allowed_http_methods) && method_exists($this, '_parse_' . $method) ? $method : 'get';
+}
 
     /**
      * See if the user has provided an API key
